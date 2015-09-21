@@ -29,10 +29,10 @@ then
                         // Check drip factor
                         brewTimeSeconds = brewingStart.getTime() - (new Date()).getTime()
                         waitForSeconds = brewTimeSeconds * drippingFactor
-                        logInfo("mysensors", "Brewing took " + brewTimeSeconds.toString() + " seconds")
-                        logInfo("mysensors", "Therefore, the dripping will take about " + waitForSeconds + " seconds")
+                        logInfo("coffee_maker", "Brewing took " + brewTimeSeconds.toString() + " seconds")
+                        logInfo("coffee_maker", "Therefore, the dripping will take about " + waitForSeconds + " seconds")
                         notifyTimer = createTimer(now.plusSeconds(waitForSeconds)) [|
-                                logInfo("mysensors", "Dripping completed!")
+                                logInfo("coffee_maker", "Dripping completed!")
                                 pushNotification("Coffee maker", "Your coffee is ready.")
                                 currentState = "finished"
                         ]
