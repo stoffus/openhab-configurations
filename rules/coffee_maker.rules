@@ -1,0 +1,47 @@
+import org.openhab.core.library.types.*
+import java.util.Date
+
+val Number coffeeIdleWattage = 40 // The wattage consumption when the coffee maker is idle
+val Number drippingFactor = 0.7 // The brewingTime / drippingTime factor
+var String currentState = null
+var String lastState = null
+var Date brewingStart
+var Timer notifyTimer
+var Number brewTimeSeconds
+var Number waitForSeconds
+
+rule "Send a push notification when the coffee maker has finished brewing"
+when
+        Item Current_GF_Kitchen_CoffeeMaker_KiloWatts changed
+then
+        // Convert kW => W
+        val Number kwatts = Current_GF_Kitchen_CoffeeMaker_KiloWatts.state
+        val Number watts = kwatts * 1000
+
+        if (watts > coffeeIdleWattage) {
+                if (lastState == null || lastState == "off" || lastState = "finished") {
+                        brewingStart = new Date()
+                        currentState = "brewing"
+                }
+        }
+        else if (watts > 0) {
+                if (lastState == "brewing") {
+                        // Check drip factor
+                        brewTimeSeconds = brewingStart.getTime() - (new Date()).getTime()
+                        waitForSeconds = brewTimeSeconds * drippingFactor
+                        logInfo("mysensors", "Brewing took " + brewTimeSeconds.toString() + " seconds")
+                        logInfo("mysensors", "Therefore, the dripping will take about " + waitForSeconds + " seconds")
+                        notifyTimer = createTimer(now.plusSeconds(waitForSeconds)) [|
+                                logInfo("mysensors", "Dripping completed!")
+                                pushNotification("Coffee maker", "Your coffee is ready.")
+                                currentState = "finished"
+                        ]
+                        currentState = "dripping"
+                }
+        else
+                currentState = "off"
+
+        lastState = currentState
+
+        postUpdate(Current_GF_Kitchen_CoffeeMaker_Watts, watts)
+end
