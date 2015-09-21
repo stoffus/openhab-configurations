@@ -2,6 +2,7 @@ import org.openhab.core.library.types.*
 import java.util.Date
 
 val Number coffeeIdleWattage = 40 // The wattage consumption when the coffee maker is idle
+val Number idleWattageDeviation = 20 // The max idle deviation in percent
 val Number drippingFactor = 0.7 // The brewingTime / drippingTime factor
 var String currentState = null
 var String lastState = null
@@ -17,8 +18,9 @@ then
         // Convert kW => W
         val Number kwatts = Current_GF_Kitchen_CoffeeMaker_KiloWatts.state
         val Number watts = kwatts * 1000
+        val Number deviation = (1 + (idleWattageDeviation / 100))
 
-        if (watts > coffeeIdleWattage) {
+        if (watts < (coffeeIdleWattage * deviation) && watts > (coffeeIdleWattage / deviation)) {
                 if (lastState == null || lastState == "off" || lastState = "finished") {
                         brewingStart = new Date()
                         currentState = "brewing"
